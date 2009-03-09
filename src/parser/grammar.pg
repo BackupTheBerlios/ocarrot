@@ -1,0 +1,573 @@
+=head1 NAME
+
+ocaml.pg - an OCaml grammar in PGE
+
+=head1 DESCRIPTION
+
+=head2 GRAMMAR RULES
+
+=cut
+
+grammar OCarrot::Grammar is PCT::Grammar;
+
+rule TOP {
+  {*} #= begin
+  ^
+#  ^ <unit_implementation> $
+  <seq_expr> {*} #= seq_expr
+  [$ || <.panic 'EOF expected'>]
+}
+
+token keywords {
+  ['let' | 'begin' | 'end' | 'in' | 'type' | 'function' | 'fun' | 'match' | 'if'
+  | 'then' | 'else' | 'with' | 'while' | 'do' | 'done' | 'for' | 'to' | 'downto'
+  | 'rec' | 'open' | 'module' | 'val' | 'class' | 'object' | 'sig' | 'as']>>
+}
+
+=head3 LEXICAL CONVENTIONS
+
+=cut
+
+token ident {
+  <!keywords>[ <letter> | '_' ] [ <word> | '\'' ]*
+}
+
+token letter { <alpha> }
+
+token integer_literal {
+  ['-']? [:ignorecase
+    ['0x' <xdigit> [ <xdigit> | '_' ]*]
+  | ['0o' <[0..7]> <[_0..7]>*]
+  | ['0b' <[0..1]> <[_0..1]>*]
+  | [<digit> ['_' | <digit>]*]
+  ]
+  {*}
+}
+
+token float_literal {
+  ['-']?
+  <digit> [<digit> | '_']*
+  ['.' [<digit> | '_']*]?
+  [:ignorecase 'e' ['+' | '-']? <digit> [<digit> | '_']* ]?
+  {*}
+}
+
+token char_literal {
+  '\'' [ . | <escape_sequence> ] '\''
+}
+
+token escape_sequence {
+  \\ [\\ | '"' | '\'' | n | t | b | r]
+  | \\ <digit> <digit> <digit>
+  | \\ x <xdigit> <xdigit>
+}
+
+token string_constant {
+  '"' <string_literal: '"'> '"' {*}
+}
+
+token label {
+  '~' <ident> ':'
+}
+
+token optlabel {
+  '?' <ident> ':'
+}
+
+token infix_symbol {
+ ['=' | '<' | '>' | '@' | '^' | '|' | '&' | '+' | '-' | '*' | '/' | '$' | '%']
+ <operator_char>*
+}
+
+token prefix_symbol {
+ ['!' | '?' | '~']
+ <operator_char>*
+}
+
+token operator_char {
+  '!' | '$' | '%' | '&' | '*' | '+' | '-' | '.' | '/' | ':' | '<' | '=' | '>' |
+  '?' | '@' | '^' | '|' | '~'
+}
+
+token linenum_directive {
+  '#' <digit>+ [ '"' <string_character>* '"' ]
+}
+
+=head3 VALUES
+
+=cut
+
+=head3 NAMES
+
+=cut
+
+token lowercase_ident {
+  <!keywords>[ <lower> | '_' ][ <letter> | <digit> | '_' | '\'' ]*
+}
+
+token capitalized_ident {
+  [ <upper> | '_' ] [ <letter> | <digit> | '_' | '\'' ]*
+}
+
+token value_name {
+  <lowercase_ident>
+  | '(' <operator_name> ')'
+}
+
+token operator_name {
+  <prefix_symbol> | <infix_op>
+}
+
+token infix_op {
+  <infix_symbol>
+  | '*' | '=' | or | '&' | ':='
+  | mod | land | lor | lxor | lsl | lsr | asr
+}
+
+token constr_name { <capitalized_ident> }
+token label_name { <lowercase_ident> }
+token tag_name { <capitalized_ident> }
+token typeconstr_name { <lowercase_ident> }
+token field_name { <lowercase_ident> }
+token module_name { <capitalized_ident> }
+token modtype_name { <ident> }
+token class_name { <lowercase_ident> }
+token inst_var_name { <lowercase_ident> }
+token method_name { <lowercase_ident> }
+
+rule value_path {
+#  [ <module_path> '.' ]? <value_name>
+  <value_name> {*}
+}
+
+regex constr {
+  [ <module_path> '.' ]? <constr_name>
+}
+
+regex typeconstr {
+  [ <extended_module_path> '.' ]? <typeconstr_name>
+}
+
+regex field {
+  [ <module_path> '.' ]? <field_name>
+}
+
+regex module_path {
+  [ <module_name> '.' ]* <module_name>
+}
+
+regex extended_module_path {
+    [ <extended_module_path> '.' ]? <module_name>
+  | <extended_module_path> '(' <extended_module_path> ')'
+}
+
+regex modtype_path {
+  [ <extended_module_path> '.' ]? <modtype_name>
+}
+
+regex class_path {
+  [ <module_path> '.' ]? <class_name>
+}
+
+=head3 TYPE EXPRESSIONS
+
+=cut
+
+regex typexpr {
+    '\'' <ident>
+  | '_'
+  | '(' <typexpr> ')'
+  | [ '?'? <label_name> ':']? <typexpr> '->' <typexpr>
+  | <typexpr> [ '*' <typexpr> ]+
+  | <typeconstr>
+  | <typexpr> <typeconstr>
+  | '(' <typexpr> [ ',' <typexpr> ]* ')' <typeconstr>
+  | <typexpr> as '\'' <ident>
+  | <variant_type>
+  | '<' '..'? '>'
+  | '<' <method_type> [';' <method_type>]* ['; ..']? '>'
+  | <typexpr>? '#' <class_path>
+  | '(' <typexpr> [',' <typexpr>]* ')' '#' <class_path>
+}
+
+regex poly_typexpr {
+  <typexpr>
+  | [ '\'' <ident> ]+ '.' <typexpr>
+}
+
+token method_type {
+  <method_name> ':' <poly_typexpr>
+}
+
+token variant_type {
+  '[' [
+      '|'? <tag_spec> [ '|' <tag_spec> ]*
+    | '>' <tag_spec>? [ '|' <tag_spec> ]*
+    | '<' '|'? <tag_spec_full> ['|' <tag_spec_full>]* ['>' ['`' <tag_name>]+ ]?
+  ] ']'
+}
+
+token tag_spec {
+  '`' <tag_name> [of <typexpr>]?
+  | <typexpr>
+}
+
+token tag_spec_full {
+  '`' <tag_name> [of <typexpr>]? ['&' <typexpr>]*
+  | <typexpr>
+}
+
+=head3 CONSTANTS
+
+=cut
+
+rule constant {
+  <float_literal>     {*} #= float_literal
+  | <integer_literal> {*} #= integer_literal
+  | <char_literal>    {*} #= char_literal
+  | <string_constant> {*} #= string_constant
+  | <constr>          {*} #= constr
+  | true              {*} #= true
+  | false             {*} #= false
+  | '()'              {*} #= unit
+  | '[]'              {*} #= empty_list
+  | '`' <tag_name>    {*} #= variant
+}
+
+=head3 PATTERNS
+
+=cut
+
+rule pattern {
+  <value_name>
+  | '_'
+  | <constant>
+#  | <pattern> as <value_name>
+  | '(' <pattern> [':' <typexpr>]? ')'
+#  | <pattern> '|' <pattern>
+  | <constr> <pattern>
+  | '`' <tag_name> <pattern>
+  | '#'<typeconstr_name>
+#  | <pattern> [',' <pattern>]*
+  | '{'<field> '=' <pattern> [';' <field> '=' <pattern>]* '}'
+  | '[' <pattern> [';' <pattern>]* ']'
+#  | <pattern> '::' <pattern>
+  | '[|' <pattern> [';' <pattern>]* '|]'
+}
+
+=head3 EXPRESSIONS
+
+=cut
+
+rule seq_expr {
+  <expr> [ ';' <expr> ]* {*}
+}
+
+rule expr {
+  let [rec]? <let_binding> [and <let_binding>]* in <seq_expr> {*} #= let_in
+  | <op_expression> {*} #= op_expression
+}
+
+rule op_expression is optable { ... }
+
+proto 'infix:+' is precedence('1') is pirop('n_add') { ... }
+proto 'infix:*' is tighter('infix:+') is pirop('n_mul') { ... }
+proto 'term:' is tighter('infix:*') is parsed(&primary_expression) { ... }
+
+rule primary_expression {
+  <simple_expression> [ <args=simple_expression> ]* {*}
+}
+
+rule simple_expression {
+  <constant>     {*} #= constant
+  | <value_path> {*} #= value_path
+  | '(' <seq_expr> ')'     {*} #= seq_expr
+  | begin <seq_expr> end {*} #= seq_expr
+  | '[|' <expr> [';' <expr>]* '|]'         {*} #= array
+  | '[' <expr> [';' <expr>]* ']'         {*} #= list
+}
+
+#rule expr {
+#  <value_path>                            {*} #= value_path
+#  | <constant>                            {*} #= constant
+#  | '(' <expr> ')'                        {*} #= expr
+#  | begin <expr> end                      {*} #= expr
+#  | '(' <expr> ':' <typexpr> ')'          {*} #= paren_type
+#  | <expr> [',' <expr>]+                  {*} #= tuple
+#  | <constr> <expr>                       {*} #= constructor
+#  | '`' <tag_name> <expr>                 {*} #= variant
+#  | <expr> '::' <expr>                    {*} #= list_cons
+#  | '[' <expr> [';' <expr>]* ']'          {*} #= list
+#  | '{' <field> '=' <expr> [';' <field> '=' <expr>]* '}'
+#                                          {*} #= record
+#  | '{' <expr> with <field> '=' <expr> [';' <field> '=' <expr>]* '}'
+#                                          {*} #= record_with
+#  | <expr> <argument>+                    {*} #= apply
+#  | <expr> '.' <field>                    {*} #= record_field
+#  | <expr> '.' <field> '<-' <expr>        {*} #= record_mutable
+#  | <expr> '.' '(' <expr> ')'             {*} #= array_item
+#  | <expr> '.' '(' <expr> ')' '<-' <expr> {*} #= array_set
+#  | <expr> '.' '[' <expr> ']'             {*} #= string_item
+#  | <expr> '.' '[' <expr> ']' '<-' <expr> {*} #= string_set
+#  | if <expr> then <expr> [else <expr>]?  {*} #= if
+#  | while <expr> do <expr> done           {*} #= while
+#  | for <ident> '=' <expr> [to | downto] <expr> do <expr> done
+#                                          {*} #= for
+#  | <expr> ';' <expr>                     {*} #= seq
+#  | match <expr> with <pattern_matching>
+#                                          {*} #= match
+#  | function <pattern_matching>           {*} #= function
+#  | fun <multiple_matching>               {*} #= fun
+#  | try <expr> with <pattern_matching>    {*} #= try
+#  | new <class_path>
+#  | object <class_body> end
+#  | <expr> '#' <method_name>
+#  | <inst_var_name>
+#  | <inst_var_name> '<-' <expr>
+#  | '(' <expr> ':>' <typexpr> ')'
+#  | '(' <expr> ':' <typexpr> ':>' <typexpr> ')'
+#  | '{<' <inst_var_name> '=' <expr> [';' <inst_var_name> '=' <expr>]* '>}'
+#  | assert <expr>
+#  | lazy <expr>
+#  | <primary_expression>                    {*} #= primary
+#  {*}
+#}
+
+rule argument {
+  <expr>
+  | '~' <label_name>
+  | '~' <label_name> ':' <expr>
+  | '?' <label_name>
+  | '?' <label_name> ':' <expr>
+}
+
+rule pattern_matching {
+  '|'? <pattern> [when <expr>]? '->' <expr>
+  ['|' <pattern> [when <expr>]? '->' <expr>]*
+}
+
+rule multiple_matching {
+  <parameter>+ [when <expr>]? '->' <expr>
+}
+
+rule let_binding {
+  <value_name> <parameter>* '=' <expr> {*} #= function
+  | <value_path> '=' <expr> {*} #= value
+#  <pattern> '=' <expr> {*} #= value
+#  | <value_name> <parameter>* [':' <typexpr>]? '=' <expr> {*} #= function
+}
+
+rule parameter {
+  <value_name> {*}
+#  <pattern>
+#  | '~' <label_name>
+#  | '~' '(' <label_name> [':' <typexpr>]? ')'
+#  | '~' <label_name> ':' <pattern>
+#  | '?' <label_name>
+#  | '?' '(' <label_name> [':' <typexpr>]? ['=' <expr>]? ')'
+#  | '?' <label_name> ':' <pattern>
+#  | '?' <label_name> ':' '(' <pattern> [':' <typexpr>]? ['=' <expr>]? ')'
+}
+
+=head3 TYPE AND EXCEPTION DEFINITIONS
+
+=cut
+
+rule type_definition {
+  type <typedef> [and <typedef>]*
+}
+
+rule typedef {
+  <type_params>? <typeconstr_name> <type_information>?
+}
+
+rule type_information {
+  <type_equation>? <type_representation>? <type_constraint>*
+}
+
+rule type_equation {
+  '=' <typexpr>
+}
+
+rule type_representation {
+  '=' <constr_decl> ['|' <constr_decl>]*
+  | '=' '{' <field_decl> [ ';' <field_decl> ]* '}'
+}
+
+rule type_params {
+  <type_param>
+  | '(' <type_param> [ ',' <type_param> ]* ')'
+}
+
+rule type_param {
+  '\'' <ident>
+  | '+\'' <ident>
+  | '-\'' <ident>
+}
+
+rule constr_decl {
+  <constr_name>
+  | <constr_name> of <typexpr> [ '*' <typexpr> ]*
+}
+
+rule field_decl {
+  <field_name> ':' <poly_typexpr>
+  | mutable <field_name> ':' <poly_typexpr>
+}
+
+rule type_constraint {
+  constraint '\''<ident> '=' <typexpr>
+}
+
+rule exception_definition {
+  exception <constr_name> [of <typexpr> [ '*' <typexpr> ]*]?
+  | exception <constr_name> '=' <constr>
+}
+
+=head3 CLASSES
+
+=cut
+
+rule class_type {
+  <class_body_type>
+  | [ '?'?<label_name>':' ]? <typexpr> '->' <class_type>
+}
+
+rule class_body_type {
+  object ['(' <typexpr> ')']? <class_field_spec>* end
+  | <class_path>
+  | '[' <typexpr> [ ',' <typexpr> ]* ']' <class_path>
+}
+
+rule class_field_spec {
+  inherit <class_type>
+  | val [mutable]? [virtual]? <inst_var_name> ':' <typexpr>
+  | method [private]? <method_name> ':' <poly_typexpr>
+  | method [private]? virtual <method_name> ':' <poly_typexpr>
+  | constraint <typexpr> '=' <typexpr>
+}
+
+rule class_expr {
+  <class_path>
+  | '[' <typexpr> [ ',' <typexpr> ]* ']' <class_path>
+  | '(' <class_expr> ')'
+  | '(' <class_expr> ':' <class_type> ')'
+  | <class_expr> <arguments>+
+  | fun <parameter>+ '->' <class_expr>
+  | let [rec]? <let_binding> [ and <let_binding> ]* in <class_expr>
+  | object ['(' <pattern> [':' <typexpr>]? ')']? <class_field>* end
+}
+
+rule class_field {
+  inherit <class_expr> [as <value_name>]?
+  | val [mutable]? <inst_var_name> [':' <typexpr>]? '=' <expr>
+  | val [mutable]? virtual <inst_var_name> ':' <typexpr>
+  | method [private]? <method_name> <parameter>* [':' <typexpr>]? '=' <expr>
+  | method [private]? <method_name> ':' <poly_typexpr> '=' <expr>
+  | method [private]? virtual <method_name> ':' <poly_typexpr>
+  | constraint <typexpr> '=' <typexpr>
+  | initializer <expr>
+}
+
+rule class_body {
+  ['(' <pattern> [':' <typexpr>]? ')']? <class_field>*
+}
+
+rule class_definition {
+  class <class_binding> [ and <class_binding> ]*
+}
+
+rule class_binding {
+  'virtual'? ['[' <type_parameters> ']']?
+    <class_name> <parameter>* [':' <class_type>]? '=' <class_expr>
+}
+
+rule type_parameters {
+  '\''<ident> [ ',' '\''<ident> ]*
+}
+
+rule class_specification {
+  class <class_spec> [ and <class_spec> ]*
+}
+
+rule class_spec {
+  [virtual]? ['[' <type_parameters> ']']? <class_name> ':' <class_type>
+}
+
+rule classtype_definition {
+  class type <classtype_def> [ and <classtype_def> ]*
+}
+
+rule classtype_def {
+  [virtual]? ['[' <type_parameters> ']']? <class_name> '=' <class_body_type>
+}
+
+=head3 MODULE TYPES (MODULE SPECIFICATIONS)
+
+=cut
+
+rule module_type {
+  <modtype_path>
+  | sig [ <specification> ';;'? ]* end
+  | functor '(' <module_name> ':' <module_type> ')' '->' <module_type>
+  | <module_type> with <mod_constraint> [ and <mod_constraint> ]*
+  | '(' <module_type> ')'
+}
+
+rule mod_constraint {
+  type <type_parameters>? <typeconstr> '=' <typexpr>
+  | module <module_path> '=' <extended_module_path>
+}
+
+rule specification {
+  val <value_name> ':' <typexpr>
+  | external <value_name> ':' <typexpr> '=' <external_declaration>
+  | <type_definition>
+  | exception <constr_decl>
+  | <class_specification>
+  | <classtype_definition>
+  | module <module_name> ':' <module_type>
+  | module <module_name> [ '(' <module_name> ':' <module_type> ')' ] ':' <module_type>
+  | module type <modtype_name>
+  | module type <modtype_name> '=' <module_type>
+  | open <module_path>
+  | include <module_type>
+}
+
+=head3 MODULE EXPRESSIONS (MODULE IMPLEMENTATIONS)
+
+=cut
+
+rule module_expr {
+  <module_path>
+  | struct [ <definition> ';;'? ]* end
+  | functor '(' <module_name> ':' <module_type> ')' '->' <module_expr>
+  | <module_expr> '(' <module_expr> ')'
+  | '(' <module_expr> ')'
+  | '(' <module_expr> ':' <module_type> ')'
+}
+
+rule definition {
+  let 'rec'? <let_binding> [ and <let_binding> ]* {*} #= let
+  | external <value_name> ':' <typexpr> '=' <external_definition>
+  | <type_definition>
+  | <exception_definition>
+  | <class_definition>
+  | <classtype_definition>
+  | module <module_name> [ '(' <module_name> ':' <module_type>  ')' ]* [ ':' <module_type> ]? '=' <module_expr>
+  | module type <modtype_name> '=' <module_type>
+  | open <module_path>
+  | include <module_expr>
+}
+
+=head3 COMPILATION UNITS
+
+=cut
+
+rule unit_interface {
+  [ <specification> ';;'? ]*
+}
+
+rule unit_implementation {
+  [ <definition> ';;'? ]*
+}
