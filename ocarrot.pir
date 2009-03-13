@@ -21,18 +21,27 @@ object.
 
 =cut
 
-.namespace [ 'OCarrot'; 'Compiler' ]
+.HLL 'OCarrot'
 
-.loadlib 'ocarrot_group'
-
-.sub 'onload' :anon :load :init
+.sub '' :anon :load :init
     load_bytecode 'PCT.pbc'
+    .local pmc parrotns, cns, exports
 
+    parrotns = get_root_namespace ['parrot']
+    cns = get_hll_namespace
+    exports = split ' ', 'PAST PCT PGE'
+    parrotns.'export_to'(cns, exports)
+.end
+
+.sub '__onload' :load :init
     $P0 = get_hll_global ['PCT'], 'HLLCompiler'
     $P1 = $P0.'new'()
     $P1.'language'('OCarrot')
-    $P1.'parsegrammar'('OCarrot::Grammar')
-    $P1.'parseactions'('OCarrot::Grammar::Actions')
+
+    $P2 = get_hll_namespace ['OCarrot'; 'Grammar']
+    $P1.'parsegrammar'($P2)
+    $P2 = get_hll_namespace ['OCarrot'; 'Grammar'; 'Actions']
+    $P1.'parseactions'($P2)
 
     $P1.'commandline_banner'("        Carrot version 0.0.0\n\n")
     $P1.'commandline_prompt'('# ')
@@ -40,6 +49,11 @@ object.
     $P0 = new 'List'
     set_hll_global ['OCarrot';'Grammar';'Actions'], '@?BLOCK', $P0
 .end
+
+# .include 'src/gen_builtins.pir'
+.include 'src/gen_grammar.pir'
+.include 'src/gen_actions.pir'
+
 
 =item main(args :slurpy)  :main
 
@@ -52,15 +66,8 @@ to the OCarrot compiler.
     .param pmc args
 
     $P0 = compreg 'OCarrot'
-    $P1 = $P0.'command_line'(args)
+    .tailcall $P0.'command_line'(args)
 .end
-
-
-# .include 'src/gen_builtins.pir'
-.include 'src/gen_grammar.pir'
-.include 'src/gen_actions.pir'
-
-.namespace []
 
 .sub '%list'
   .param pmc fields :slurpy
