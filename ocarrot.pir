@@ -46,7 +46,7 @@ object.
     $P1.'commandline_banner'("        Carrot version 0.0.0\n\n")
     $P1.'commandline_prompt'('# ')
 
-    $P0 = new 'List'
+    $P0 = new 'ResizablePMCArray'
     set_hll_global ['OCarrot';'Grammar';'Actions'], '@?BLOCK', $P0
 .end
 
