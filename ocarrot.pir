@@ -23,6 +23,8 @@ object.
 
 .HLL 'OCarrot'
 
+.loadlib 'ocarrot_group'
+
 .sub '' :anon :load :init
     load_bytecode 'PCT.pbc'
     .local pmc parrotns, cns, exports

@@ -26,20 +26,20 @@ PMC_DIR       = src/pmc
 PARROT        = $(BUILD_DIR)/parrot$(EXE)
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
-BUILD_DYNOPS  = $(PERL) $(BUILD_DIR)/tools/build/dynoplibs.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe$(EXE)
 
 SOURCES = ocarrot.pir \
   src/gen_grammar.pir \
-  src/gen_actions.pir
-#  src/gen_builtins.pir \
+  src/gen_actions.pir \
+  $(OCARROT_GROUP)
+#  src/gen_builtins.pir
 
 BUILTINS_PIR = # \
 
 PMCS        = ocarrotsub
-
 PMC_SOURCES = $(PMC_DIR)/ocarrotsub.pmc
+OCARROT_GROUP = $(PMC_DIR)/ocarrot_group$(LOAD_EXT)
 
 CLEANUPS = \
   ocarrot.pbc \

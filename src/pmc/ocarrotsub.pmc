@@ -1,0 +1,154 @@
+/*
+=head1 OCarrot Subs
+
+=head2 Description
+
+An C<OCarrotSub> extends Parrot C<Sub>s to provide curried functions.
+
+=head3 Overloaded Methods
+
+=over 4
+
+=cut
+
+*/
+
+pmclass ocarrotsub
+    is  Sub
+    need_ext
+    dynpmc
+    hll      ocarrot
+    maps     Sub {
+
+    ATTR PMC    *call_object; /* The signature */
+    Parrot_Context *context; /* The context in which we store args */
+    opcode_t *param_indexes; /* Param indexes */
+    opcode_t *return_indexes;
+
+/*
+
+=item C<void init()>
+
+Initializes the subroutine.
+
+=cut
+
+*/
+    VTABLE void init() {
+      Parrot_ocarrotsub_attributes *attrs =
+        mem_allocate_zeroed_typed(Parrot_ocarrotsub_attributes);
+
+      attrs->call_object = NULL; /* XXX might need initialization */
+      /* = pmc_new(INTERP, enum_class_CallSignature); */
+      /* attrs->context might also need to be initialized */
+      PMC_data(SELF) = attrs;
+      PObj_custom_mark_destroy_SETALL(SELF);
+    }
+
+/*
+
+=item C<STRING* name()>
+
+Return the string "function".
+
+=cut
+
+*/
+    VTABLE STRING* name() {
+        return CONST_STRING(INTERP, "function");
+    }
+
+/*
+
+=item C<STRING* get_string()>
+
+=cut
+
+*/
+    VTABLE STRING* get_string() {
+        return CONST_STRING(INTERP, "<fun>");
+    }
+
+/*
+
+=item C<opcode_t* invoke(void* next)>
+
+=cut
+
+*/
+    VTABLE opcode_t* invoke(void *next) {
+      PMC *tmp, *call_object;
+      INTVAL req_args, already_args, new_args;
+      Parrot_Context *my_ctx;
+      opcode_t *param_indexes;
+
+      /* Get our context, we'll probably need it */
+      GET_ATTR_context(INTERP, SELF, my_ctx);
+      GET_ATTR_param_indexes(INTERP, SELF, param_indexes);
+
+      /* Number of required positional arguments */
+      VTABLE_set_pmc(INTERP, tmp, VTABLE_inspect_str(INTERP, SELF,
+            CONST_STRING(INTERP, "pos_required")));
+      req_args = VTABLE_get_integer(INTERP, tmp);
+
+      /* Number of previously given arguments */
+      GET_ATTR_call_object(INTERP, SELF, call_object);
+      already_args = VTABLE_get_integer(INTERP, call_object);
+
+      /* XXX Number of new arguments from this invocation */
+      const opcode_t *args_op = interp->current_args;
+      if(!args_op)
+        Parrot_ex_throw_from_c_args(INTERP, NULL, 1,
+            "I really do expect arguments");
+      PARROT_ASSERT(*args_op == PARROT_OP_set_args_pc);
+      /* get the signature */
+      ++args_op;
+      sig = constants[*args_op]->u.key;
+      ASSERT_SIG_PMC(sig);
+      new_args = VTABLE_elements(interp_sig);
+
+      /* First case: we've got exactly the right number of arguments, so we can
+       * just call the sub */
+      if(already_args == 0 && new_args == req_args) {
+        return SUPER(self);
+      }
+      else if(already_args + new_args == req_args) {
+        /* Second case: cool, we've just found the last arguments. Copy them to
+         * our current context and run! */
+        /* XXX we might need to clone our context */
+        parrot_pass_args(INTERP, CONTEXT(INTERP), my_ctx, INTERP->current_args,
+            param_indexes + already_args, PARROT_PASS_PARAMS);
+        return SUPER(self);
+        }
+      }
+      else if(already_args + new_args <= req_args) {
+        /* Third case: okay, too few arguments. Keep them for later and return
+         * the new closure. */
+        /* XXX alter the signature before calling parrot_pass_args to match the
+         * actual number of arguments */
+        /* XXX clone ourselves */
+        parrot_pass_args(INTERP, CONTEXT(INTERP), my_ctx, INTERP->current_args,
+            param_indexes + already_args, PARROT_PASS_PARAMS);
+      }
+      else { /* Fourth case: Too many arguments. Take just enough arguments,
+                call the sub, and invoke the result with the remaining
+                arguments. */
+        Parrot_ex_throw_from_c_args(INTER, NULL, 1, "Too_many_args not yet
+            implemented");
+      }
+    }
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
