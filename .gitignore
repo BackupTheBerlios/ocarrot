@@ -1,0 +1,12 @@
+*~
+src/gen_*.pir
+src/gen_*.pm
+Makefile
+.*.swp
+*.patch
+ocarrot
+ocarrot.pbc
+ocarrot.exe
+ocarrot.c
+ocarrot.o
+parrot
