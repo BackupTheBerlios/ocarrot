@@ -61,6 +61,7 @@ method constant($/, $key) {
   elsif $key eq 'unit' {
   }
   elsif $key eq 'empty_list' {
+    make PAST::Val.new( :returns('ResizablePMCArray'), :node($/));
   }
   elsif $key eq 'variant' {
   }
@@ -100,12 +101,6 @@ method expr($/, $key) {
     my $block := PAST::Block.new( :blocktype('immediate'), :node($/));
     for $<let_binding> {
       $block.push( $( $_ ) );
-      # TODO If the current block is a function, curry it
-      #my $name := $( $_ ).name();
-      #my $code := PAST::Op.new( :inline('$P0 = get_hll_global "'~$name~'"',
-      #    '$P0 = curry($P0)',
-      #    'set_hll_global "'~$name~'", $P0'));
-      #$block.push($code);
     }
     $block.push( $( $<seq_expr> ) );
 
