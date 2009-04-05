@@ -1,2 +1,91 @@
-Language 'OCarrot' was created with tools/dev/mk_language_shell.pl, r28657.
+=head1 OCarrot
 
+This is OCarrot, an OCaml compiler for the Parrot virtual machine.
+
+OCarrot is Copyright (C) 2008-2009, Florian Hatat.
+Some files come from Rakudo Perl, and are Copyright (C) 2008-2009, The
+Perl Foundation.
+
+OCarrot is distributed under the terms of the Artistic License 2.0.
+See the full text of the license in the file LICENSE.
+
+=head2 Building and invoking OCarrot
+
+OCarrot is in early stages of development, don't expect it to become
+reliable in a near future, nor even build your favorite OCaml code. We
+recommend that you fetch the latest version from there:
+
+    $ git clone git://git.berlios.de/gitroot/ocarrot
+
+Once you have a copy of OCarrot, build it as follows:
+
+    $ cd ocarrot
+    $ perl Configure.pl --gen-parrot
+    $ make
+
+This will create a C<ocarrot> executable in the current directory.
+OCarrot is not yet installable, and actually we don't care for the
+moment.
+
+The C<--gen-parrot> option tells C<Configure.pl> to fetch the latest
+development version of Parrot (via 'svn') in the "parrot/"
+subdirectory, but you may probably omit it and use your system-wide
+Parrot installation.
+
+To run OCaml code with OCarrot, type:
+
+    $ ./ocarrot chamelier.ml
+
+When the Ocarrot executable is invoked without parameters, it enters
+an interactive mode, similar to OCaml's toplevel. This mode doesn't
+run as expected for the moment, since any newline (instead of ';;')
+will terminate each input.
+
+=head2 Running the test suite
+
+Enter "make test" to run OCarrot's test suite. These are simple tests,
+designed to make sure that the OCarrot compiler is capable of doing
+things we expect from it.
+
+We try to add tests for new features when we add them.
+
+=head2 Getting help, reporting bugs or submitting patches
+
+If you have any question, bug report, or patch for OCarrot, feel free
+to use the project's page on BerliOS, at
+L<http://developer.berlios.de/projects/ocarrot/>. Note that OCarrot is
+still very young, so most features of OCaml are not yet implemented,
+and bugs are expected.
+
+There is currently no mailing-list (we may have one, if I'm not alone
+on this project). You may also send an email to the maintainer
+(address below).
+
+The easiest way to get your patch integrated is to generate it with
+the C<git> command:
+
+    $ git commit -m "Your commit message"
+    $ git format-patch HEAD^
+
+and send the generated C<001-your-commit-message.patch> to the
+maintainer.
+
+If you seek more general information about the Parrot virtual machine
+itself, you can visit Parrot's website at L<http//parrot.org> or
+Parrot blog at L<http://parrotblog.org>.
+
+=head2 How the compiler works
+
+OCarrot is written using Parrot Compiler Tools.
+
+One day, there will be some detailed documentation in the F<docs/>
+directory.
+
+=head2 Author
+
+Florian Hatat C<fhatat@users.berlios.de> is the primary author and
+maintainer for OCarrot.
+
+=cut
+
+## vim: expandtab sw=4 ft=pod tw=70
