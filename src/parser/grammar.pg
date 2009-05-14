@@ -373,7 +373,7 @@ rule multiple_matching {
 }
 
 rule let_binding {
-  <value_name> <parameter>* '=' <expr> {*} #= function
+  <value_name> <parameter>+ '=' <expr> {*} #= function
   | <value_path> '=' <expr> {*} #= value
 #  <pattern> '=' <expr> {*} #= value
 #  | <value_name> <parameter>* [':' <typexpr>]? '=' <expr> {*} #= function
