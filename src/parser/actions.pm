@@ -48,6 +48,10 @@ method definition($/, $key) {
   }
 }
 
+method number($/, $key) {
+  make $( $/{$key} );
+}
+
 method constant($/, $key) {
   if $key eq 'constr'  {
   }
@@ -78,6 +82,21 @@ method seq_expr($/) {
   make $past;
 }
 
+method expr($/, $key) {
+  if $key eq 'let_in' {
+    my $block := PAST::Block.new( :blocktype('immediate'), :node($/));
+    for $<let_binding> {
+      $block.push( $( $_ ) );
+    }
+    $block.push( $( $<seq_expr> ) );
+
+    make $block;
+  }
+  else {
+    make $( $/{$key} );
+  }
+}
+
 method op_expression($/, $key) {
   if ($key eq 'end') {
     make $($<expr>);
@@ -93,21 +112,6 @@ method op_expression($/, $key) {
         $past.push( $($_) );
     }
     make $past;
-  }
-}
-
-method expr($/, $key) {
-  if $key eq 'let_in' {
-    my $block := PAST::Block.new( :blocktype('immediate'), :node($/));
-    for $<let_binding> {
-      $block.push( $( $_ ) );
-    }
-    $block.push( $( $<seq_expr> ) );
-
-    make $block;
-  }
-  else {
-    make $( $/{$key} );
   }
 }
 

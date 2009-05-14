@@ -19,9 +19,10 @@ rule TOP {
 }
 
 token keywords {
-  ['let' | 'begin' | 'end' | 'in' | 'type' | 'function' | 'fun' | 'match' | 'if'
-  | 'then' | 'else' | 'with' | 'while' | 'do' | 'done' | 'for' | 'to' | 'downto'
-  | 'rec' | 'open' | 'module' | 'val' | 'class' | 'object' | 'sig' | 'as']>>
+  ['let' | 'begin' | 'end' | 'in' | 'type' | 'function' | 'fun' |
+  'match' | 'if' | 'then' | 'else' | 'with' | 'while' | 'do' | 'done' |
+  'for' | 'to' | 'downto' | 'rec' | 'open' | 'module' | 'val' | 'class'
+  | 'object' | 'sig' | 'as']>>
 }
 
 =head3 LEXICAL CONVENTIONS
@@ -29,10 +30,8 @@ token keywords {
 =cut
 
 token ident {
-  <!keywords>[ <letter> | '_' ] [ <word> | '\'' ]*
+  <!keywords> [ <alpha> | '_' ] [ <word> | '\'' ]*
 }
-
-token letter { <alpha> }
 
 token integer_literal {
   ['-']? [:ignorecase
@@ -47,9 +46,28 @@ token integer_literal {
 token float_literal {
   ['-']?
   <digit> [<digit> | '_']*
-  ['.' [<digit> | '_']*]?
-  [:ignorecase 'e' ['+' | '-']? <digit> [<digit> | '_']* ]?
+  <float_part>
   {*}
+}
+
+token float_dot_part {
+  ['.' [<digit> | '_']*]
+}
+
+token float_exponent_part {
+  [:ignorecase 'e' ['+' | '-']? <digit> [<digit> | '_']* ]
+}
+
+# Describes what can come after the integer part in a float to make it a true
+# float, instead of a simple integer. Order matters here: the
+# "<float_dot_part>"-only case has to be the last one, otherwise the engine
+# won't match floats with a dot and an exponent.
+# moritz++ and particle++ for the advice on that one.
+# TODO Rewrite this part when Parrot implements longest token match.
+token float_part {
+                     <float_exponent_part>
+  | <float_dot_part> <float_exponent_part>
+  | <float_dot_part>
 }
 
 token char_literal {
@@ -102,11 +120,11 @@ token linenum_directive {
 =cut
 
 token lowercase_ident {
-  <!keywords>[ <lower> | '_' ][ <letter> | <digit> | '_' | '\'' ]*
+  <!keywords>[ <lower> | '_' ][ <alpha> | <digit> | '_' | '\'' ]*
 }
 
 token capitalized_ident {
-  [ <upper> | '_' ] [ <letter> | <digit> | '_' | '\'' ]*
+  [ <upper> | '_' ] [ <alpha> | <digit> | '_' | '\'' ]*
 }
 
 token value_name {
@@ -221,9 +239,13 @@ token tag_spec_full {
 
 =cut
 
+token number {
+  <float_literal>   {*} #= float_literal
+| <integer_literal> {*} #= integer_literal
+}
+
 rule constant {
-  <float_literal>     {*} #= float_literal
-  | <integer_literal> {*} #= integer_literal
+  <number>            {*} #= number
   | <char_literal>    {*} #= char_literal
   | <string_constant> {*} #= string_constant
   | <constr>          {*} #= constr
@@ -243,16 +265,16 @@ rule pattern {
   | '_'
   | <constant>
 #  | <pattern> as <value_name>
-  | '(' <pattern> [':' <typexpr>]? ')'
+#  | '(' <pattern> [':' <typexpr>]? ')'
 #  | <pattern> '|' <pattern>
-  | <constr> <pattern>
-  | '`' <tag_name> <pattern>
-  | '#'<typeconstr_name>
+#  | <constr> <pattern>
+#  | '`' <tag_name> <pattern>
+#  | '#'<typeconstr_name>
 #  | <pattern> [',' <pattern>]*
-  | '{'<field> '=' <pattern> [';' <field> '=' <pattern>]* '}'
-  | '[' <pattern> [';' <pattern>]* ']'
+#  | '{'<field> '=' <pattern> [';' <field> '=' <pattern>]* '}'
+#  | '[' <pattern> [';' <pattern>]* ']'
 #  | <pattern> '::' <pattern>
-  | '[|' <pattern> [';' <pattern>]* '|]'
+#  | '[|' <pattern> [';' <pattern>]* '|]'
 }
 
 =head3 EXPRESSIONS
@@ -358,8 +380,7 @@ rule let_binding {
 }
 
 rule parameter {
-  <value_name> {*}
-#  <pattern>
+  <pattern> {*}
 #  | '~' <label_name>
 #  | '~' '(' <label_name> [':' <typexpr>]? ')'
 #  | '~' <label_name> ':' <pattern>
