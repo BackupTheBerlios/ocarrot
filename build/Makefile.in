@@ -37,8 +37,8 @@ SOURCES = ocarrot.pir \
 
 BUILTINS_PIR = # \
 
-PMCS        = ocarrotsub unit
-PMC_SOURCES = $(PMC_DIR)/ocarrotsub.pmc $(PMC_DIR)/unit.pmc
+PMCS        = unit
+PMC_SOURCES = $(PMC_DIR)/unit.pmc
 OCARROT_GROUP = $(PMC_DIR)/ocarrot_group$(LOAD_EXT)
 
 CLEANUPS = \
