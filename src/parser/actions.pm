@@ -37,6 +37,10 @@ method float_literal($/) {
   make PAST::Val.new( :value( ~$/), :returns('Float'), :node($/));
 }
 
+method char_literal($/) {
+  make PAST::Val.new( :value( ~$<char> ), :returns('String'), :node($/));
+}
+
 method string_constant($/) {
   make PAST::Val.new( :value( $($<string_literal>) ), :returns('String'), :node($/));
 }
@@ -48,26 +52,22 @@ method definition($/, $key) {
   }
 }
 
-method number($/, $key) {
-  make $( $/{$key} );
-}
-
 method constant($/, $key) {
   if $key eq 'constr'  {
   }
+  elsif $key eq 'variant' {
+  }
   elsif $key eq 'true' {
-    # TODO Type booléen
-    make PAST::Val.new( :value('1'), :returns('Integer'), :node($/));
+    make PAST::Val.new( :value('1'), :returns('Boolean'), :node($/));
   }
   elsif $key eq 'false' {
-    make PAST::Val.new( :value('0'), :returns('Integer'), :node($/));
+    make PAST::Val.new( :value('0'), :returns('Boolean'), :node($/));
   }
   elsif $key eq 'unit' {
+    make PAST::Val.new( :returns('Unit'), :node($/));
   }
   elsif $key eq 'empty_list' {
     make PAST::Val.new( :returns('ResizablePMCArray'), :node($/));
-  }
-  elsif $key eq 'variant' {
   }
   else {
     make $( $/{$key} );

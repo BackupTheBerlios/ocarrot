@@ -1,0 +1,85 @@
+/*
+=head1 OCarrot unit singleton
+
+=head2 Description
+
+A singleton PMC which defines the C<unit> type of OCaml. This type is inhabited
+by only one element, denoted by C<()>.
+
+=head3 Overloaded Methods
+
+=over 4
+
+=cut
+
+*/
+
+static PMC *Unit_PMC;
+
+pmclass Unit
+    singleton
+    need_ext
+    dynpmc
+    group ocarrot_group
+    hll      ocarrot {
+
+/*
+
+=item C<STRING* name()>
+
+Return the string "function".
+
+=cut
+
+*/
+    VTABLE STRING* name() {
+        return CONST_STRING(INTERP, "unit");
+    }
+
+/*
+
+=item C<STRING* get_string()>
+
+=cut
+
+*/
+    VTABLE STRING* get_string() {
+        return CONST_STRING(INTERP, "()");
+    }
+
+/*
+
+=item C<void *get_pointer()>
+
+=item C<void set_pointer(void *ptr)>
+
+These two functions are part of the singleton creation interface. For more
+information see F<src/pmc.c>.
+
+=cut
+
+*/ 
+
+    VTABLE void *get_pointer() {
+        return Unit_PMC;
+    }
+
+    VTABLE void set_pointer(void *ptr) {
+        Unit_PMC = (PMC *)ptr;
+    }
+
+/*
+
+=back
+
+=cut
+
+*/
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
