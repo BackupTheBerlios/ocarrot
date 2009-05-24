@@ -35,8 +35,10 @@ object.
     parrotns.'export_to'(cns, exports)
 .end
 
+.include 'src/parrot/Compiler.pir'
+
 .sub '__onload' :load :init
-    $P0 = get_hll_global ['PCT'], 'HLLCompiler'
+    $P0 = get_hll_global ['OCarrot'], 'Compiler'
     $P1 = $P0.'new'()
     $P1.'language'('OCarrot')
 
@@ -55,7 +57,6 @@ object.
 # .include 'src/gen_builtins.pir'
 .include 'src/gen_grammar.pir'
 .include 'src/gen_actions.pir'
-
 
 =item main(args :slurpy)  :main
 

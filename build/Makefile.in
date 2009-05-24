@@ -32,7 +32,8 @@ PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe$(EXE)
 SOURCES = ocarrot.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-  $(OCARROT_GROUP)
+  src/parrot/Compiler.pir \
+  $(OCARROT_GROUP) \
 #  src/gen_builtins.pir
 
 BUILTINS_PIR = # \

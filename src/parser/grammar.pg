@@ -15,6 +15,7 @@ rule TOP {
   ^
 #  ^ <unit_implementation> $
   <seq_expr> {*} #= seq_expr
+  ';;'?
   [$ || <.panic 'EOF expected'>]
 }
 
