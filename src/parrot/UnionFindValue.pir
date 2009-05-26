@@ -1,12 +1,9 @@
 .namespace ['Graph'; 'UnionFind'; 'WithValue']
 
 .sub '' :anon :load
+    load_bytecode 'UnionFind.pbc'
     $P0 = get_class ['Graph'; 'UnionFind']
-    $P1 = subclass $P0, ['Graph;' 'UnionFind'; 'WithValue']
-.end
-
-.sub 'init' :vtable :method
-
+    $P1 = subclass $P0, ['Graph'; 'UnionFind'; 'WithValue']
 .end
 
 .sub 'super' :method
@@ -29,6 +26,11 @@
 
     table = getattribute self, "table"
     $P0 = table[elem]
+
+    $I0 = isnull value
+    unless $I0 goto push_it
+    value = elem
+  push_it:
     push $P0, value
 .end
 
@@ -43,9 +45,9 @@
     table = getattribute self, 'table'
 
     $P0 = table[elem1]
-    pop $P0
+    $P1 = pop $P0
     $P0 = table[elem2]
-    pop $P0
+    $P1 = pop $P0
     $P0 = self.'find'(elem1)
     push $P0, value
 .end

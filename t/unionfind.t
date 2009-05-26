@@ -34,7 +34,7 @@
     $I0 = uf.'same'(elem1, elem2)
     nok($I0, 'elements are disjoint first')
 
-    uf.'merge'(elem1, elem2)
+    uf.'union'(elem1, elem2)
     $I0 = uf.'same'(elem1, elem2)
     ok($I0, 'merging elements')
     $I0 = uf.'same'(elem2, elem1)
@@ -50,13 +50,13 @@
     nok($I0, 'disjoint classes')
 
     uf.'add'(elem4)
-    uf.'merge'(elem3, elem4)
+    uf.'union'(elem3, elem4)
     $I0 = uf.'same'(elem3, elem4)
     ok($I0, 'second class merge')
     $I0 = uf.'same'(elem1, elem4)
     nok($I0, 'two disjoint classes')
 
-    uf.'merge'(elem1, elem4)
+    uf.'union'(elem1, elem4)
     $I0 = uf.'same'(elem1, elem2)
     ok($I0, 'first class no split')
     $I0 = uf.'same'(elem3, elem4)
@@ -77,9 +77,9 @@
     uf.'add'(elem3)
     uf.'add'(elem4)
 
-    uf.'merge'(elem1, elem2)
-    uf.'merge'(elem3, elem4)
-    uf.'merge'(elem2, elem4) # here is the difference
+    uf.'union'(elem1, elem2)
+    uf.'union'(elem3, elem4)
+    uf.'union'(elem2, elem4) # here is the difference
     $I0 = uf.'same'(elem1, elem2)
     $I1 = uf.'same'(elem3, elem4)
     $I0 = $I0 && $I1
@@ -100,9 +100,9 @@
     uf.'add'(elem3)
     uf.'add'(elem4)
 
-    uf.'merge'(elem1, elem2)
-    uf.'merge'(elem3, elem4)
-    uf.'merge'(elem1, elem3) # here is the difference
+    uf.'union'(elem1, elem2)
+    uf.'union'(elem3, elem4)
+    uf.'union'(elem1, elem3) # here is the difference
     $I0 = uf.'same'(elem1, elem2)
     $I1 = uf.'same'(elem3, elem4)
     $I0 = $I0 && $I1

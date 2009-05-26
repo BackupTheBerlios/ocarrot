@@ -48,7 +48,7 @@ Add a set containing only the element 'pmc' in the structure.
   .local pmc table
 
   table = getattribute self, "table"
-  $P0 = new 'Array'
+  $P0 = new 'ResizablePMCArray'
   $P0 = 2
   $P0[0] = $P0
   $P1 = new 'Integer'
@@ -93,14 +93,18 @@ same set have the same representant.
 =cut
 
 .sub 'find' :method
-  .param pmc elem
-  .local pmc table
+    .param pmc elem
+    .local pmc table
 
-  table = getattribute self, "table"
-  $P0 = table[elem]
+    $I0 = self.'has'(elem)
+    if $I0 goto find_it
+    self.'add'(elem)
+  find_it:
+    table = getattribute self, "table"
+    $P0 = table[elem]
 
-  $P1 = self.'_parent'($P0)
-  .return ($P1)
+    $P1 = self.'_parent'($P0)
+    .return ($P1)
 .end
 
 =item C<uf.'union'(pmc1, pmc2)>
