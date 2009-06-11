@@ -11,7 +11,6 @@ line containing C<{*}> also has a C<#= key> comment, then the
 value of the comment is passed as the second argument to the method.
 
 =end comments
-=cut
 
 class OCarrot::Grammar::Actions;
 
