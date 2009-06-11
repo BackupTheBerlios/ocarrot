@@ -1,4 +1,16 @@
+=head1 First-order Unification
+
+=head2 Description
+
+=head2 Classes
+
+=cut
+
 .include 'hllmacros.pir'
+
+=head3 Variables
+
+=cut
 
 .namespace ['OCarrot'; 'Unification'; 'Variable']
 
@@ -42,6 +54,16 @@
     .return ($I0)
 .end
 
+.sub 'get_variables' :method
+    $P0 = new 'ResizablePMCArray'
+    push $P0, self
+    .return ($P0)
+.end
+
+=head3 Constructors
+
+=cut
+
 .namespace ['OCarrot'; 'Unification'; 'Constructor']
 
 .sub '' :anon :load
@@ -50,14 +72,40 @@
     addattribute $P0, 'arguments'
 .end
 
-.sub 'get_pmc' :vtable
+.sub 'init_pmc' :vtable
+    .param pmc new_value :optional
+    $P0 = new 'ResizablePMCArray'
+
+    setattribute self, 'arguments', $P0
+    .tailcall self.'name'(new_value)
+.end
+
+.sub 'init' :vtable
+    $P0 = new 'ResizablePMCArray'
+    setattribute self, 'arguments', $P0
+.end
+
+.sub 'name' :method
+    .param pmc new_value :optional
+
+    if_null new_value, get_cons_name
+    setattribute self, 'constructor', new_value
+    .return (new_value)
+
+  get_cons_name:
     $P0 = getattribute self, 'constructor'
     .return ($P0)
 .end
 
-.sub 'set_pmc' :vtable
-    .param pmc newpmc
-    setattribute self, 'constructor', newpmc
+.sub 'arguments' :method
+    .param pmc args :slurpy :optional
+
+    if_null args, get_cons_args
+    setattribute self, 'arguments', args
+
+  get_cons_args:
+    $P0 = getattribute self, 'arguments'
+    .return ($P0)
 .end
 
 .sub 'get_iter' :vtable
@@ -80,8 +128,8 @@
     $I0 = isa other, cons_class
     unless $I0 goto different
 
-    $P0 = deref self
-    $P1 = deref other
+    $P0 = self.'name'()
+    $P1 = other.'name'()
     unless $P0 == $P1 goto different
     $P0 = getattribute self, 'arguments'
     $P1 = getattribute other, 'arguments'
@@ -121,11 +169,28 @@
     $P0[key] = value
 .end
 
-.sub 'arguments' :method
-    .param pmc args :slurpy
+.sub 'get_variables' :method
+    .local pmc iterator
+    .local pmc variables
 
-    setattribute self, 'arguments', args
+    $P0 = getattribute self, 'arguments'
+    iterator = iter $P0
+    variables = new 'ResizablePMCArray'
+
+  cons_getvars_loop:
+    unless iterator goto cons_getvars_end
+    $P0 = shift iterator
+    $P1 = $P0.'get_variables'()
+    variables.'append'($P1)
+    goto cons_getvars_loop
+
+  cons_getvars_end:
+    .return (variables)
 .end
+
+=head2 Constraint solving
+
+=cut
 
 .namespace ['OCarrot'; 'Unification'; 'Constraints']
 
@@ -161,7 +226,7 @@
     .If({$I0}, {
       $I2 = env.'has'(a)
       .Unless({$I2}, {
-        env.'add'(a, a)
+      env.'add'(a, a)
       })
     })
     .If({$I1}, {
@@ -177,9 +242,9 @@
     if $I1 goto b_variable_a_cons
 
   both_cons:
-    # Check that the two constructors are equal
-    $P0 = deref a
-    $P1 = deref b
+    # Check that both constructors are equal
+    $P0 = a.'name'()
+    $P1 = b.'name'()
     if $P0 == $P1 goto constructors_ok
     # If we reach this place, constructors are different: throw an
     # exception.
@@ -234,7 +299,30 @@
 
 .sub 'is_recursive' :method
     # Check whether the solution is recursive
+    .local pmc to_visit # List of nodes which have to be visited
+    .local pmc env
+    .local pmc current_node
+    .local pmc visited # Node already completely visited : true
+    # Node being visited : exists but value is false
+
+    visited = new ['Hash']
+
+    env = getattribute self, 'env'
+    to_visit = iter env
+
+  visit_loop:
+    unless to_visit goto visit_end
+    current_node = shift to_visit
+    push_eh found_a_cycle
+    self.'__traverse'(current_node, visited)
+    goto visit_loop
+
+  visit_end:
+    pop_eh
     .return (0)
+
+  found_a_cycle:
+    .return (1)
 .end
 
 .sub 'substitute' :method
@@ -270,6 +358,46 @@
       .tailcall self.'substitute'($P0)
     })
 .end
+
+.sub '__traverse' :method
+    .param pmc current_node
+    .param pmc visited
+
+    .local pmc env
+    .local pmc variables
+
+    env = getattribute self, 'env'
+    $I0 = exists visited[current_node]
+    if $I0 goto traverse_already_seen
+
+    visited[current_node] = 0
+    $P0 = env.'get_value'(current_node)
+    variables = $P0.'get_variables'()
+    variables = iter variables
+  traverse_iter_variables:
+    unless variables goto traverse_iter_end
+    $P0 = shift variables
+    $P0 = env.'find'($P0)
+    $P0 = env.'representative'($P0)
+    if $P0 == current_node goto traverse_iter_variables
+    self.'__traverse'($P0, visited)
+    goto traverse_iter_variables
+
+  traverse_iter_end:
+    visited[current_node] = 1
+    .return ()
+
+  traverse_already_seen:
+    $I0 = visited[current_node]
+    unless $I0 goto traverse_has_cycle
+    .return ()
+
+  traverse_has_cycle:
+    $P0 = root_new ['parrot'; 'Exception']
+    $P0.'message'('Traversal of the unifier found a cycle')
+    throw $P0
+.end
+
 # Local Variables:
 #   mode: pir
 #   fill-column: 100

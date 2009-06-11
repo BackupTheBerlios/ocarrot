@@ -30,20 +30,14 @@
 
 .sub reflexive_constants
     $P0 = new ['OCarrot'; 'Unification'; 'Constraints']
+
     $P1 = new ['OCarrot'; 'Unification'; 'Constructor']
-    $P3 = new 'ResizablePMCArray'
-    $P3 = 0
-    setattribute $P1, 'arguments', $P3
-
     $P2 = new ['OCarrot'; 'Unification'; 'Constructor']
-    $P3 = new 'ResizablePMCArray'
-    $P3 = 0
-    setattribute $P2, 'arguments', $P3
 
     $P3 = box "a constructor name"
-    setref $P1, $P3
+    $P1.'name'($P3)
     $P3 = box "a constructor name"
-    setref $P2, $P3
+    $P2.'name'($P3)
 
     $P0.'add_constraint'($P1, $P2)
 
@@ -69,7 +63,7 @@
     is($P1, $P3, 'first variable unchanged')
     $P4 = $P0.'substitute'($P2)
     is($P2, $P4, 'second variable unchanged')
-    isnt($P3, $P4, 'both variables now yet merged')
+    isnt($P3, $P4, 'both variables not yet merged')
 
     # Now, merge them
     $P0.'add_constraint'($P1, $P2)
@@ -81,11 +75,8 @@
 .sub cons_with_variable
     $P0 = new ['OCarrot'; 'Unification'; 'Constraints']
     $P1 = new ['OCarrot'; 'Unification'; 'Constructor']
-    $P3 = new 'ResizablePMCArray'
-    $P3 = 0
-    setattribute $P1, 'arguments', $P3
     $P3 = box "Cons_name"
-    setref $P1, $P3
+    $P1.'name'($P3)
 
     $P2 = new ['OCarrot'; 'Unification'; 'Variable']
 
@@ -111,32 +102,24 @@
 
     uf = new ['OCarrot'; 'Unification'; 'Constraints']
 
-    cons1 = new ['OCarrot'; 'Unification'; 'Constructor']
     $P0 = box "A"
-    setref cons1, $P0
+    cons1 = new ['OCarrot'; 'Unification'; 'Constructor']
+    cons1.'name'($P0)
 
     # Add three arguments to our first constructor
-    $P0 = new 'ResizablePMCArray'
     $P1 = new ['OCarrot'; 'Unification'; 'Variable']
-    push $P0, $P1
     $P2 = new ['OCarrot'; 'Unification'; 'Variable']
-    push $P0, $P2
     $P3 = new ['OCarrot'; 'Unification'; 'Variable']
-    push $P0, $P3
-    setattribute cons1, "arguments", $P0
+    cons1.'arguments'($P1, $P2, $P3)
 
     # Do the same with the second constructor
+    $P0 = box "A"
     cons2 = new ['OCarrot'; 'Unification'; 'Constructor']
-    $P8 = box "A"
-    setref cons2, $P8
-    $P7 = new 'ResizablePMCArray'
+    cons2.'name'($P0)
     $P1 = new ['OCarrot'; 'Unification'; 'Variable']
-    push $P7, $P1
     $P2 = new ['OCarrot'; 'Unification'; 'Variable']
-    push $P7, $P2
     $P3 = new ['OCarrot'; 'Unification'; 'Variable']
-    push $P7, $P3
-    setattribute cons2, "arguments", $P7
+    cons2.'arguments'($P1, $P2, $P3)
 
     # They are not equal
     $P1 = uf.'substitute'(cons1)
@@ -157,16 +140,14 @@
     var = new ['OCarrot'; 'Unification'; 'Variable']
     cons = new ['OCarrot'; 'Unification'; 'Constructor']
     $P0 = box "F"
-    setref cons, $P0
-    $P0 = new 'ResizablePMCArray'
-    push $P0, var
-    setattribute cons, 'arguments', $P0
+    cons.'name'($P0)
+    cons.'arguments'(var)
 
     uf.'add_constraint'(var, cons)
     ok(1, 'recursive constraint solved')
 
     $I0 = uf.'is_recursive'()
-    todo($I0, 'solution is recursive')
+    ok($I0, 'solution is recursive')
 .end
 
 .sub complicated_unification
@@ -192,18 +173,18 @@
 
     # Build the term G(F(a, b), c, d) in c11
     $P0 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref $P0, consF
+    $P0.'name'(consF)
     $P0.'arguments'(vara, varb)
     c11 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref c11, consG
+    c11.'name'(consG)
     c11.'arguments'($P0, varc, vard)
 
     # Build the term G(e, f, F(g)) in c12
     $P0 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref $P0, consF
+    $P0.'name'(consF)
     $P0.'arguments'(varg)
     c12 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref c12, consG
+    c12.'name'(consG)
     c12.'arguments'(vare, varf, $P0)
 
     # Build the term e in c21
@@ -211,32 +192,32 @@
 
     # Build the term F(F(c), L(a)) in c22
     $P0 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref $P0, consF
+    $P0.'name'(consF)
     $P0.'arguments'(varc)
     $P1 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref $P1, consL
+    $P1.'name'(consL)
     $P1.'arguments'(vara)
     c22 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref c22, consF
+    c22.'name'(consF)
     c22.'arguments'($P0, $P1)
 
     # Build the term K(f,c) in c31
     c31 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref c31, consK
+    c31.'name'(consK)
     c31.'arguments'(varf, varc)
 
     # Build the term K(L(F(g)), L(d)) in c32
     $P0 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref $P0, consF
+    $P0.'name'(consF)
     $P0.'arguments'(varg)
     $P1 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref $P1, consL
+    $P1.'name'(consL)
     $P1.'arguments'($P0)
     $P2 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref $P2, consL
+    $P2.'name'(consL)
     $P2.'arguments'(vard)
     c32 = new ['OCarrot'; 'Unification'; 'Constructor']
-    setref c32, consK
+    c32.'name'(consK)
     c32.'arguments'($P1, $P2)
 
     # Now, merge for all i, ci1 and ci2
@@ -260,19 +241,12 @@
     $P4 = uf.'substitute'(c31)
     $P5 = uf.'substitute'(c32)
 
-    $P6 = uf.'substitute'(vara)
-    $P7 = uf.'substitute'(varb)
-    $P8 = uf.'substitute'(varc)
-    $P9 = uf.'substitute'(vard)
-    $P10= uf.'substitute'(vare)
-    $P11= uf.'substitute'(varf)
-    $P12= uf.'substitute'(varg)
     is($P0, $P1, 'first equality satisfied')
     is($P2, $P3, 'second equality satisfied')
     is($P4, $P5, 'third equality satisfied')
 
     $I0 = uf.'is_recursive'()
-    todo($I0, 'solution is not recursive')
+    nok($I0, 'solution is not recursive')
 .end
 
 # Local Variables:

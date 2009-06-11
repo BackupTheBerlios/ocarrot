@@ -22,6 +22,10 @@ Splitting a set or removing an element is however not allowed.
 
 .namespace [ "Graph"; "UnionFind" ]
 
+.const int PARENT = 0
+.const int RANK = 1
+.const int REPRESENTATIVE = 2
+
 .sub '__onload' :anon :load
   $P0 = newclass [ "Graph"; "UnionFind" ]
 
@@ -49,11 +53,11 @@ Add a set containing only the element 'pmc' in the structure.
 
   table = getattribute self, "table"
   $P0 = new 'ResizablePMCArray'
-  $P0 = 2
-  $P0[0] = $P0
+  # $P0[PARENT] is null
   $P1 = new 'Integer'
   $P1 = 0
-  $P0[1] = $P1
+  $P0[RANK] = $P1
+  $P0[REPRESENTATIVE] = elem
   table[elem] = $P0
 .end
 
@@ -73,24 +77,27 @@ Checks if the parameter 'pmc' is in the structure.
   .return ($I0)
 .end
 
-.sub '_parent' :method
-  .param pmc elem
-
-  $P0 = elem[0]
-  eq_addr $P0, elem, root
-    $P1 = self.'_parent'($P0)
-    $P0[0] = $P1
-    .return ($P1)
-  root:
-    .return (elem)
-.end
-
 =item C<uf.'find'(pmc)>
 
 Returns a PMC representing the set which contains 'pmc'. Two elements in the
 same set have the same representant.
 
 =cut
+
+.sub '_parent' :method
+    .param pmc elem
+
+    $P0 = elem[PARENT]
+    $I0 = isnull $P0
+    if $I0 goto reached_root
+
+    $P1 = self.'_parent'($P0)
+    elem[PARENT] = $P1
+    .return ($P1)
+
+  reached_root:
+    .return (elem)
+.end
 
 .sub 'find' :method
     .param pmc elem
@@ -103,8 +110,7 @@ same set have the same representant.
     table = getattribute self, "table"
     $P0 = table[elem]
 
-    $P1 = self.'_parent'($P0)
-    .return ($P1)
+    .tailcall self.'_parent'($P0)
 .end
 
 =item C<uf.'union'(pmc1, pmc2)>
@@ -121,19 +127,19 @@ Merges the sets which contain 'pmc1' and 'pmc2'.
   $P0 = self.'find'(elem1)
   $P1 = self.'find'(elem2)
 
-  $I0 = $P0[1]
-  $I1 = $P1[1]
+  $I0 = $P0[RANK]
+  $I1 = $P1[RANK]
 
   if $I0 > $I1 goto do_union
     exchange $P0, $P1
   do_union:
-    $P1[0] = $P0
+    $P1[PARENT] = $P0
 
     if $I0 < $I1 goto union_end
       inc $I0
       $P3 = new 'Integer'
       $P3 = $I0
-      $P0[1] = $P3
+      $P0[RANK] = $P3
   union_end:
 .end
 
@@ -155,6 +161,37 @@ Checks whether the two parameters belong to the same set.
 
   $I0 = issame $P0, $P1
   .return($I0)
+.end
+
+.sub 'get_iter' :vtable
+    .local pmc result
+    .local pmc table
+    .local pmc keys_iter
+
+    result = new 'ResizablePMCArray'
+    table = getattribute self, "table"
+    keys_iter = iter table
+
+  elements_loop:
+    unless keys_iter goto elements_end
+    $P0 = shift keys_iter
+    $P1 = table[$P0]
+    $P2 = $P1[PARENT]
+    $I0 = isnull $P2
+    unless $I0 goto elements_loop
+    push result, $P0
+    goto elements_loop
+
+  elements_end:
+    result = iter result
+    .return (result)
+.end
+
+.sub 'representative' :method
+    .param pmc elem
+
+    $P0 = elem[REPRESENTATIVE]
+    .return ($P0)
 .end
 
 # Local Variables:

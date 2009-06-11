@@ -1,5 +1,7 @@
 .namespace ['Graph'; 'UnionFind'; 'WithValue']
 
+.const int VALUE = 3
+
 .sub '' :anon :load
     load_bytecode 'UnionFind.pbc'
     $P0 = get_class ['Graph'; 'UnionFind']
@@ -31,7 +33,7 @@
     unless $I0 goto push_it
     value = elem
   push_it:
-    push $P0, value
+    $P0[VALUE] = value
 .end
 
 .sub 'union' :method
@@ -45,18 +47,18 @@
     table = getattribute self, 'table'
 
     $P0 = table[elem1]
-    $P1 = pop $P0
+    $P1 = $P0[VALUE]
     $P0 = table[elem2]
-    $P1 = pop $P0
+    $P1 = $P0[VALUE]
     $P0 = self.'find'(elem1)
-    push $P0, value
+    $P0[VALUE] = value
 .end
 
 .sub 'get_value' :method
     .param pmc elem
 
     $P0 = self.'find'(elem)
-    $P1 = $P0[2]
+    $P1 = $P0[VALUE]
     .return ($P1)
 .end
 
@@ -65,7 +67,7 @@
     .param pmc value
 
     $P0 = self.'find'(elem)
-    $P0[2] = value
+    $P0[VALUE] = value
 .end
 
 # Local Variables:
