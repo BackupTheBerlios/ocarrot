@@ -12,9 +12,7 @@ Rakudo).
 
 =head2 DESCRIPTION
 
-Maintains an appropriate copy of Parrot in the parrot/ subdirectory.
-The revision of Parrot to be used in the build is given by the
-build/PARROT_REVISION file.
+Gets the latest SVN copy of Parrot in the parrot/ subdirectory.
 
 =cut
 
@@ -25,27 +23,8 @@ use 5.008;
 #  Work out slash character to use.
 my $slash = $^O eq 'MSWin32' ? '\\' : '/';
 
-##  determine what revision of Parrot we require
-open my $REQ, "build/PARROT_REVISION"
-  || die "cannot open build/PARROT_REVISION\n";
-my $required = <$REQ>; chomp $required;
-close $REQ;
-
-{
-    no warnings;
-    if (open my $REV, '-|', "parrot${slash}parrot_config revision") {
-        my $revision = <$REV>;
-        close $REV;
-        chomp $revision;
-        if ($revision >= $required) {
-            print "Parrot r$revision already available (r$required required)\n";
-            exit(0);
-        }
-    }
-}
-
-print "Checking out Parrot r$required via svn...\n";
-system(qw(svn checkout -r),  $required , qw(https://svn.parrot.org/parrot/trunk parrot));
+print "Checking out latest Parrot revision via svn...\n";
+system(qw(svn checkout https://svn.parrot.org/parrot/trunk parrot));
 
 chdir('parrot');
 
@@ -78,4 +57,4 @@ sub read_parrot_config {
     }
     %config;
 }
-    
+

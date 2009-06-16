@@ -136,9 +136,15 @@ statement.
     set_addr state, state_initial
 
   next_line:
+    # The current way of checking EOF is wrong, but we have to way for a
+    # fix in Parrot which makes readline set the EOF flag. See also
+    # label "interactive_end".
+    #$I0 = isfalse handle # check for EOF
+    #if $I0 goto interactive_end
     current_line = handle.'readline_interactive'(prompt)
-    $I2 = isnull current_line
-    .If($I2,{ .return(current_line) })
+    if null current_line goto interactive_end
+    unless current_line goto next_line
+
     $I0 = -1
     $I1 = elements current_line
   next_char:
@@ -155,6 +161,10 @@ statement.
     concat result, " "
     prompt = "> "
     goto next_line
+
+  interactive_end:
+    $P0 = root_new ['parrot'; 'Null']
+    .return ($P0)
 
   state_initial:
     # Initial state: we stay there except in the following four cases
