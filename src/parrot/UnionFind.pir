@@ -1,8 +1,10 @@
-=head1 NAME
+=head1 Union-find Data Structures
 
-Graph;UnionFind - union-find data-structures
+=head2 Name
 
-=head1 DESCRIPTION
+['Graph'; 'UnionFind'] - union-find data-structures
+
+=head2 Description
 
 Union-find is a data structure for representing a collection of disjoint sets
 of elements. The structure is optimized to perform quickly the operations of
@@ -10,13 +12,27 @@ merging two sets, and finding whether two elements belong to the same set.
 
 Splitting a set or removing an element is however not allowed.
 
-=head1 SYNOPSIS
+You have to make sure that two different elements of the structure
+convert into different strings.
+
+=head2 Synopsis
 
   .local pmc uf
-
-  load_bytecode "union-find.pbc"
-
+  load_bytecode 'UnionFind.pbc'
   uf = new ['Graph'; 'UnionFind']
+
+  $P0 = ... # Some PMC
+  uf.'add'($P0)
+
+  $P1 = ... # Some other PMC
+  uf.'add'($P1)
+
+  # Each element is first alone in its class, this returns false:
+  $I0 = uf.'same'($P0, $P1)
+
+  # Now, merge their classes
+  uf.'merge'($P0, $P1)
+  $I0 = uf.'same'($P0, $P1) # Now returns true
 
 =cut
 
@@ -26,7 +42,7 @@ Splitting a set or removing an element is however not allowed.
 .const int RANK = 1
 .const int REPRESENTATIVE = 2
 
-.sub '__onload' :anon :load
+.sub '__onload' :anon :load :init
   $P0 = newclass [ "Graph"; "UnionFind" ]
 
   addattribute $P0, "table"
@@ -37,7 +53,7 @@ Splitting a set or removing an element is however not allowed.
   setattribute self, "table", $P0
 .end
 
-=head1 METHODS
+=head2 Methods
 
 =over 4
 
@@ -63,7 +79,7 @@ Add a set containing only the element 'pmc' in the structure.
 
 =item C<uf.'has'(pmc)>
 
-Checks if the parameter 'pmc' is in the structure.
+Returns a true value if the parameter 'pmc' is in the structure.
 
 =cut
 
@@ -80,7 +96,7 @@ Checks if the parameter 'pmc' is in the structure.
 =item C<uf.'find'(pmc)>
 
 Returns a PMC representing the set which contains 'pmc'. Two elements in the
-same set have the same representant.
+same set have the same representative.
 
 =cut
 
@@ -163,6 +179,12 @@ Checks whether the two parameters belong to the same set.
   .return($I0)
 .end
 
+=item Vtable C<get_iter>
+
+Returns an Iterator over current equivalence classes.
+
+=cut
+
 .sub 'get_iter' :vtable
     .local pmc result
     .local pmc table
@@ -187,12 +209,22 @@ Checks whether the two parameters belong to the same set.
     .return (result)
 .end
 
+=item C<uf.'representative'(pmc)>
+
+Given a class C<pmc> as argument, returns the element which represents
+this class.
+
+=cut
+
 .sub 'representative' :method
     .param pmc elem
 
     $P0 = elem[REPRESENTATIVE]
     .return ($P0)
 .end
+
+=back
+=cut
 
 # Local Variables:
 #   mode: pir

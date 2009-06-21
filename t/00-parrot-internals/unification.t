@@ -1,4 +1,6 @@
-#! parrot
+.include 'Unification.pir'
+
+.namespace []
 
 .sub test :main
     load_bytecode 'Test/More.pbc'
@@ -9,10 +11,7 @@
     exports = split ' ', 'plan ok nok is isnt todo'
     test_namespace.'export_to'(curr_namespace, exports)
 
-    plan(21)
-
-    load_bytecode 'Unification.pbc'
-    ok(1, 'load library')
+    plan(20)
 
     reflexive_constants()
     fresh_variables_are_different()

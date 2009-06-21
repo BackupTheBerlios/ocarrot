@@ -4,8 +4,8 @@ src/gen_*.pm
 Makefile
 .*.swp
 *.patch
+*.pbc
 ocarrot
-ocarrot.pbc
 ocarrot.exe
 ocarrot.c
 ocarrot.o

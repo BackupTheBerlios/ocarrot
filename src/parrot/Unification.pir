@@ -7,6 +7,7 @@
 =cut
 
 .include 'hllmacros.pir'
+.include 'UnionFindValue.pir'
 
 =head3 Variables
 
@@ -14,7 +15,7 @@
 
 .namespace ['OCarrot'; 'Unification'; 'Variable']
 
-.sub '' :anon :load
+.sub '' :anon :load :init
     $P0 = newclass ['OCarrot'; 'Unification'; 'Variable']
     addattribute $P0, "var_id"
 
@@ -38,7 +39,7 @@
     .return($S0)
 .end
 
-.sub 'is_equal' :vtable
+.sub 'is_equal' :vtable :multi(_,_)
     .param pmc other
     .local pmc var_class
 
@@ -66,7 +67,7 @@
 
 .namespace ['OCarrot'; 'Unification'; 'Constructor']
 
-.sub '' :anon :load
+.sub '' :anon :load :init
     $P0 = newclass ['OCarrot'; 'Unification'; 'Constructor']
     addattribute $P0, 'constructor'
     addattribute $P0, 'arguments'
@@ -120,7 +121,7 @@
     .return ($I0)
 .end
 
-.sub 'is_equal' :vtable
+.sub 'is_equal' :vtable :multi(_,_)
     .param pmc other
     .local pmc cons_class
 
@@ -194,8 +195,7 @@
 
 .namespace ['OCarrot'; 'Unification'; 'Constraints']
 
-.sub '' :anon :load
-    load_bytecode "UnionFindValue.pbc"
+.sub '' :anon :load :init
     $P0 = get_class 'Hash'
     $P1 = subclass $P0, ['OCarrot'; 'Unification'; 'Constraints']
     addattribute $P1, 'env' # equivalence classes of variables

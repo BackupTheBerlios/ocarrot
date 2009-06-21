@@ -1,13 +1,32 @@
 #! perl
 
-# $Id$
-
-# pragmata
 use strict;
 use warnings;
-use 5.008;
 
-use lib qw( . lib ../lib ../../lib ../../lib );
-use Parrot::Test::Harness language => 'OCarrot',
-                          compiler => 'ocarrot.pbc';
+use FindBin;
+use Getopt::Long qw(:config pass_through);
 
+use TAP::Harness;
+
+GetOptions(
+    'verbosity=i'       => \(my $verbose = 0),
+    'jobs:3'            => \my $jobs,
+);
+
+my @tfiles = ("t/00-parrot-internals/unionfind.t",
+  "t/00-parrot-internals/unification.t");
+
+my %harness_options = (
+  exec      => \&which_command,
+  verbosity => 0+$verbose,
+  jobs      => $jobs || 1,
+  );
+TAP::Harness->new( \%harness_options )->runtests(@tfiles);
+
+sub which_command {
+  my $tap = shift;
+  my $file = shift;
+
+  return [qw(./parrot/parrot -w -I ./src/parrot/),
+    $file] if $file ~~ /00-parrot-internals/;
+}

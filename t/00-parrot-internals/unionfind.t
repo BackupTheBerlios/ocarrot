@@ -1,7 +1,8 @@
-#! parrot
+.include 'UnionFind.pir'
 
+.namespace []
 .sub test :main
-    load_bytecode 'library/Test/More.pbc'
+    load_bytecode 'Test/More.pbc'
 
     .local pmc exports, curr_namespace, test_namespace
     curr_namespace = get_namespace
@@ -9,10 +10,7 @@
     exports = split ' ', 'plan diag ok nok is is_deeply like isa_ok skip isnt todo'
     test_namespace.'export_to'(curr_namespace, exports)
 
-    plan(20)
-
-    load_bytecode 'UnionFind.pbc'
-    ok(1, 'load library')
+    plan(19)
 
     .local pmc uf
 
