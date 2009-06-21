@@ -156,7 +156,7 @@ method simple_expression($/, $key) {
 method let_binding($/, $key) {
   if $key eq 'value' {
     #TODO c'est un motif !
-    my $lhs := PAST::Var.new( :name(~$<value_path>), :scope('package'),
+    my $lhs := PAST::Var.new( :name( $( $<value_path>) ), :scope('package'),
                               :lvalue('1'), :node($<value_path>));
     my $rhs := $( $<expr> );
     make PAST::Op.new($lhs, $rhs, :pasttype('bind'), :node($/));
@@ -177,6 +177,10 @@ method let_binding($/, $key) {
 }
 
 method parameter($/) {
+  make PAST::Var.new( :name(~$<value_name>), :scope('lexical'), :node($/));
+}
+
+method value_path($/) {
   make PAST::Var.new( :name(~$<value_name>), :scope('lexical'), :node($/));
 }
 
