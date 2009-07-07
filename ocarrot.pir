@@ -21,7 +21,7 @@ object.
 
 =cut
 
-.HLL 'OCarrot'
+.HLL '_ocarrot'
 
 .loadlib 'ocarrot_group'
 
@@ -37,7 +37,7 @@ object.
 
 .include 'src/parrot/Compiler.pir'
 
-.sub '__onload' :load :init
+.sub '__onload' :load :init :anon
     $P0 = get_hll_global ['OCarrot'], 'Compiler'
     $P1 = $P0.'new'()
     $P1.'language'('OCarrot')
