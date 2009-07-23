@@ -1,0 +1,58 @@
+/*
+=head1 Array data type for OCarrot.
+
+=head2 Description
+
+This PMC stores OCarrot (fixed size) arrays.
+
+=head3 Overloaded Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "ocarrot.h"
+
+pmclass caml_array
+    extends caml_block
+    need_ext
+    dynpmc
+    group ocarrot_group
+    hll ocarrot {
+
+/*
+
+=back
+
+=cut
+
+*/
+      VTABLE void init_pmc(PMC *init_array) {
+        PMC **aggregate;
+        INTVAL size, i;
+
+        Parrot_caml_block_get_vtable(INTERP)->init(INTERP, SELF);
+
+        SET_ATTR_tag(INTERP, SELF, 0);
+
+        size = VTABLE_elements(INTERP, init_array);
+        aggregate = mem_allocate_n_zeroed_typed(size, PMC **);
+
+        for(i = 0; i < size; i++) {
+          aggregate[i] = VTABLE_get_pmc_keyed_int(INTERP, init_array, i);
+        }
+
+        SET_ATTR_aggregate(INTERP, SELF, aggregate);
+        SET_ATTR_iv(INTERP, SELF, ocarrot_words(PTR_SIZE * size));
+      }
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
+

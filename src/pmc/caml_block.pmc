@@ -1,0 +1,84 @@
+/*
+=head1 Base class for OCarrot blocks
+
+=head2 Description
+
+This PMC is the base class for OCaml blocks.
+
+=head3 Overloaded Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "ocarrot.h"
+
+pmclass caml_block
+    extends caml_value
+    need_ext
+    dynpmc
+    group ocarrot_group
+    hll ocarrot {
+
+      ATTR INTVAL tag;
+      ATTR void *aggregate;
+/*
+
+=back
+
+=cut
+
+*/
+      VTABLE void init() {
+        Parrot_caml_block_attributes *attrs =
+          mem_allocate_typed(Parrot_caml_block_attributes);
+        PMC_data(SELF) = attrs;
+
+        PObj_custom_mark_destroy_SETALL(SELF);
+
+        PObj_get_FLAGS(SELF) |= OCarrot_Value_is_boxed;
+        SET_ATTR_iv(INTERP, SELF, 0);
+        SET_ATTR_tag(INTERP, SELF, 0);
+        SET_ATTR_aggregate(INTERP, SELF, NULL);
+      }
+
+      VTABLE void mark() {
+        INTVAL tag;
+        GET_ATTR_tag(INTERP, SELF, tag);
+        if(tag < No_scan_tag) {
+          INTVAL size;
+          INTVAL i;
+          PMC **aggregate;
+          void *void_aggregate;
+
+          GET_ATTR_iv(INTERP, SELF, size);
+          GET_ATTR_aggregate(INTERP, SELF, void_aggregate);
+          aggregate = (PMC **)void_aggregate;
+
+          for(i = 0; i < size; i++) {
+            VTABLE_mark(INTERP, aggregate[i]);
+          }
+        }
+      }
+
+      VTABLE destroy() {
+        void *aggregate;
+        GET_ATTR_aggregate(INTERP, SELF, aggregate);
+
+        if(aggregate) {
+          mem_sys_free(aggregate);
+        }
+
+        Parrot_caml_value_get_vtable(INTERP)->destroy(INTERP, SELF);
+      }
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
+

@@ -18,7 +18,8 @@ PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
 PERL6GRAMMAR  = $(BUILD_DIR)/runtime/parrot/library/PGE/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
-PMC_DIR       = src/pmc
+PMC_DIR       = $(PWD)/src/pmc
+DYNPMC_INCLUDE= $(PWD)/include/ocarrot,$(PMC_DIR)
 
 # Set up extensions
 
@@ -38,8 +39,12 @@ SOURCES = ocarrot.pir \
 
 BUILTINS_PIR = # \
 
-PMCS        = unit
-PMC_SOURCES = $(PMC_DIR)/unit.pmc
+PMCS        = caml_value caml_block caml_float caml_string caml_array
+PMC_SOURCES = $(PMC_DIR)/caml_value.pmc \
+	      $(PMC_DIR)/caml_block.pmc \
+	      $(PMC_DIR)/caml_float.pmc \
+	      $(PMC_DIR)/caml_string.pmc \
+	      $(PMC_DIR)/caml_array.pmc
 OCARROT_GROUP = $(PMC_DIR)/ocarrot_group$(LOAD_EXT)
 
 CLEANUPS = \
@@ -92,7 +97,7 @@ src/gen_builtins.pir: $(BUILTINS_PIR)
 
 $(OCARROT_GROUP): $(PARROT) $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
+	cd $(PMC_DIR) && DYNPMC_INCLUDE=$(DYNPMC_INCLUDE) $(BUILD_DYNPMC) compile $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
 

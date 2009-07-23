@@ -1,0 +1,57 @@
+/*
+=head1 String data type for OCarrot.
+
+=head2 Description
+
+This PMC stores OCarrot values of type C<string>.
+
+=head3 Overloaded Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "ocarrot.h"
+
+pmclass caml_string
+    extends caml_block
+    need_ext
+    dynpmc
+    group ocarrot_group
+    hll ocarrot {
+
+/*
+
+=back
+
+=cut
+
+*/
+      VTABLE void init() {
+        Parrot_caml_block_get_vtable(INTERP)->init(INTERP, SELF);
+
+        SET_ATTR_tag(INTERP, SELF, String_tag);
+      }
+
+      VTABLE void set_string_native(STRING *value) {
+        SET_ATTR_aggregate(INTERP, SELF, value);
+        SET_ATTR_iv(INTERP, SELF, ocarrot_words(PTR_SIZE));
+      }
+
+      VTABLE destroy() {
+        /* Just call caml_value's destroy vtable, since we don't want
+         * caml_block to free the string (the GC will take care of
+         * that). */
+        Parrot_caml_value_get_vtable(INTERP)->destroy(INTERP, SELF);
+      }
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
+

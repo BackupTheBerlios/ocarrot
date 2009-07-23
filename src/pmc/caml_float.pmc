@@ -1,0 +1,59 @@
+/*
+=head1 Floating point data type for OCarrot.
+
+=head2 Description
+
+This PMC stores OCarrot values of type C<float> (double precision
+floats).
+
+=head3 Overloaded Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "ocarrot.h"
+
+pmclass caml_float
+    extends caml_block
+    need_ext
+    dynpmc
+    group ocarrot_group
+    hll ocarrot {
+
+/*
+
+=back
+
+=cut
+
+*/
+      VTABLE void init() {
+        Parrot_caml_block_get_vtable(INTERP)->init(INTERP, SELF);
+
+        SET_ATTR_tag(INTERP, SELF, Double_tag);
+      }
+
+      VTABLE void set_number_native(FLOATVAL value) {
+        FLOATVAL *aggregate;
+
+        GET_ATTR_aggregate(INTERP, SELF, aggregate);
+        if(!aggregate) {
+          aggregate = mem_allocate_typed(FLOATVAL);
+          SET_ATTR_iv(INTERP, SELF, ocarrot_words(NUMVAL_SIZE));
+          SET_ATTR_aggregate(INTERP, SELF, aggregate);
+        }
+
+        *aggregate = value;
+      }
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
+
