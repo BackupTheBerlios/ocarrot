@@ -34,6 +34,7 @@ SOURCES = ocarrot.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/parrot/Compiler.pir \
+  runtime/ocarrot.pir \
   $(OCARROT_GROUP) \
 #  src/gen_builtins.pir
 
@@ -81,7 +82,7 @@ ocarrot$(EXE): ocarrot.pbc
 	@win32_libparrot_copy@
 
 ocarrot.pbc: $(PARROT) $(SOURCES)
-	$(PARROT) $(PARROT_ARGS) -o ocarrot.pbc ocarrot.pir
+	$(PARROT) $(PARROT_ARGS) -o ocarrot.pbc ocarrot.pir runtime/ocarrot.pir
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
