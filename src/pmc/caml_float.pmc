@@ -31,13 +31,13 @@ pmclass caml_float
 
 */
       VTABLE void init() {
-        Parrot_caml_block_get_vtable(INTERP)->init(INTERP, SELF);
+        SUPER();
 
         SET_ATTR_tag(INTERP, SELF, Double_tag);
       }
 
       VTABLE void set_number_native(FLOATVAL value) {
-        FLOATVAL *aggregate;
+        void *aggregate;
 
         GET_ATTR_aggregate(INTERP, SELF, aggregate);
         if(!aggregate) {
@@ -46,8 +46,30 @@ pmclass caml_float
           SET_ATTR_aggregate(INTERP, SELF, aggregate);
         }
 
-        *aggregate = value;
+        *(FLOATVAL *)aggregate = value;
       }
+
+      VTABLE FLOATVAL get_number() {
+          void *aggregate;
+          FLOATVAL result;
+
+          GET_ATTR_aggregate(INTERP, SELF, aggregate);
+          if(!aggregate) {
+            Parrot_ex_throw_from_c_args(INTERP, NULL, 1,
+                    "This caml_float is undefined");
+          }
+
+          result = *(FLOATVAL *)aggregate;
+          return result;
+      }
+
+      VTABLE void set_string_native(STRING *new_value) {
+          FLOATVAL new_float_value;
+
+          new_float_value = Parrot_str_to_num(INTERP, new_value);
+          SELF.set_number_native(new_float_value);
+      }
+
 }
 
 /*

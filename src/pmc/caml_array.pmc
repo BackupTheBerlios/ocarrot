@@ -29,6 +29,10 @@ pmclass caml_array
 =cut
 
 */
+      VTABLE void init() {
+          VTABLE_init_pmc(INTERP, SELF, NULL);
+      }
+
       VTABLE void init_pmc(PMC *init_array) {
         PMC **aggregate;
         INTVAL size, i;
@@ -37,11 +41,17 @@ pmclass caml_array
 
         SET_ATTR_tag(INTERP, SELF, 0);
 
-        size = VTABLE_elements(INTERP, init_array);
-        aggregate = mem_allocate_n_zeroed_typed(size, PMC **);
+        if(PMC_IS_NULL(init_array)) {
+            size = 0;
+            aggregate = NULL;
+        }
+        else {
+          size = VTABLE_elements(INTERP, init_array);
+          aggregate = mem_allocate_n_zeroed_typed(size, PMC **);
 
-        for(i = 0; i < size; i++) {
-          aggregate[i] = VTABLE_get_pmc_keyed_int(INTERP, init_array, i);
+          for(i = 0; i < size; i++) {
+            aggregate[i] = VTABLE_get_pmc_keyed_int(INTERP, init_array, i);
+          }
         }
 
         SET_ATTR_aggregate(INTERP, SELF, aggregate);

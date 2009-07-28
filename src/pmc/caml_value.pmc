@@ -105,6 +105,13 @@ pmclass caml_value
         }
       }
 
+      VTABLE void set_string_native(STRING *new_value) {
+          INTVAL new_int_value;
+
+          new_int_value = Parrot_str_to_int(INTERP, new_value);
+          SELF.set_integer_native(new_int_value);
+      }
+
       METHOD is_boxed() {
         INTVAL res = PObj_get_FLAGS(SELF) & OCarrot_Value_is_boxed;
         RETURN(INTVAL res);

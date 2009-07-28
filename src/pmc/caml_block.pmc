@@ -44,6 +44,11 @@ pmclass caml_block
         SET_ATTR_aggregate(INTERP, SELF, NULL);
       }
 
+      VTABLE void set_integer_native (INTVAL new_size) {
+          Parrot_ex_throw_from_c_args(INTERP, NULL, 1,
+                  "Too late to set the size of caml_block");
+      }
+
       VTABLE void mark() {
         INTVAL tag;
         GET_ATTR_tag(INTERP, SELF, tag);
@@ -58,12 +63,12 @@ pmclass caml_block
           aggregate = (PMC **)void_aggregate;
 
           for(i = 0; i < size; i++) {
-            VTABLE_mark(INTERP, aggregate[i]);
+            Parrot_gc_mark_PObj_alive(INTERP, (PObj *)aggregate[i]);
           }
         }
       }
 
-      VTABLE destroy() {
+      VTABLE void destroy() {
         void *aggregate;
         GET_ATTR_aggregate(INTERP, SELF, aggregate);
 
@@ -71,7 +76,29 @@ pmclass caml_block
           mem_sys_free(aggregate);
         }
 
-        Parrot_caml_value_get_vtable(INTERP)->destroy(INTERP, SELF);
+        SUPER();
+      }
+
+      VTABLE PMC *get_pmc_keyed_int(INTVAL index) {
+          void *aggregate;
+          GET_ATTR_aggregate(INTERP, SELF, aggregate);
+
+          if(aggregate) {
+              return ((PMC **)aggregate)[index];
+          }
+
+          return PMCNULL;
+      }
+
+      METHOD tag(INTVAL new_tag :optional, int got_new_tag :opt_flag) {
+          if(got_new_tag) {
+            SET_ATTR_tag(INTERP, SELF, new_tag);
+          }
+          else {
+            INTVAL tag;
+            GET_ATTR_tag(INTERP, SELF, tag);
+            RETURN(INTVAL tag);
+          }
       }
 }
 

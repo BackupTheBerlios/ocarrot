@@ -29,8 +29,9 @@ pmclass caml_string
 =cut
 
 */
+
       VTABLE void init() {
-        Parrot_caml_block_get_vtable(INTERP)->init(INTERP, SELF);
+        SUPER();
 
         SET_ATTR_tag(INTERP, SELF, String_tag);
       }
@@ -40,11 +41,26 @@ pmclass caml_string
         SET_ATTR_iv(INTERP, SELF, ocarrot_words(PTR_SIZE));
       }
 
-      VTABLE destroy() {
+      VTABLE STRING *get_string() {
+        void *aggregate;
+        GET_ATTR_aggregate(INTERP, SELF, aggregate);
+        return (STRING *)aggregate;
+      }
+
+      VTABLE void destroy() {
         /* Just call caml_value's destroy vtable, since we don't want
          * caml_block to free the string (the GC will take care of
          * that). */
         Parrot_caml_value_get_vtable(INTERP)->destroy(INTERP, SELF);
+      }
+
+      VTABLE void mark() {
+          void *aggregate;
+          GET_ATTR_aggregate(INTERP, SELF, aggregate);
+
+          if(aggregate) {
+              Parrot_gc_mark_PObj_alive(INTERP, (PObj *)aggregate);
+          }
       }
 }
 
