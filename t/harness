@@ -5,7 +5,6 @@ use warnings;
 
 use TAP::Harness;
 use File::Find;
-use Data::Dumper;
 
 my @tfiles;
 find(sub { /\.t$/ && push @tfiles, $File::Find::name; }, "t");
