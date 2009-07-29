@@ -3,30 +3,25 @@
 use strict;
 use warnings;
 
-use FindBin;
-use Getopt::Long qw(:config pass_through);
-
 use TAP::Harness;
+use File::Find;
+use Data::Dumper;
 
-GetOptions(
-    'verbosity=i'       => \(my $verbose = 0),
-    'jobs:3'            => \my $jobs,
-);
-
-my @tfiles = ("t/00-parrot-internals/unionfind.t",
-  "t/00-parrot-internals/unification.t");
+my @tfiles;
+find(sub { /\.t$/ && push @tfiles, $File::Find::name; }, "t");
 
 my %harness_options = (
   exec      => \&which_command,
-  verbosity => 0+$verbose,
-  jobs      => $jobs || 1,
+  verbosity => 0,
+  jobs      => 1,
   );
-TAP::Harness->new( \%harness_options )->runtests(@tfiles);
+
+TAP::Harness->new( \%harness_options )->runtests(sort @tfiles);
 
 sub which_command {
   my $tap = shift;
   my $file = shift;
 
-  return [qw(./parrot/parrot -w -I ./src/parrot/),
-    $file] if $file ~~ /00-parrot-internals/;
+  return [qw(./parrot/parrot -w -I ./src/parrot/ -L ./src/pmc),
+    $file];
 }

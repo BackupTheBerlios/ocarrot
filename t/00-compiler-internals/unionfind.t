@@ -1,3 +1,5 @@
+#!parrot
+
 .include 'UnionFind.pir'
 
 .namespace []

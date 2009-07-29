@@ -1,3 +1,5 @@
+#!parrot
+
 .include 'Unification.pir'
 
 .namespace []
