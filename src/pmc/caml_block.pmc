@@ -17,6 +17,7 @@ This PMC is the base class for OCaml blocks.
 
 pmclass caml_block
     extends caml_value
+    auto_attrs
     need_ext
     dynpmc
     group ocarrot_group
@@ -32,10 +33,6 @@ pmclass caml_block
 
 */
       VTABLE void init() {
-        Parrot_caml_block_attributes *attrs =
-          mem_allocate_typed(Parrot_caml_block_attributes);
-        PMC_data(SELF) = attrs;
-
         PObj_custom_mark_destroy_SETALL(SELF);
 
         PObj_get_FLAGS(SELF) |= OCarrot_Value_is_boxed;

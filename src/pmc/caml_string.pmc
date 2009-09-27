@@ -17,7 +17,7 @@ This PMC stores OCarrot values of type C<string>.
 
 pmclass caml_string
     extends caml_block
-    need_ext
+    auto_attrs
     dynpmc
     group ocarrot_group
     hll ocarrot {
@@ -45,6 +45,24 @@ pmclass caml_string
         void *aggregate;
         GET_ATTR_aggregate(INTERP, SELF, aggregate);
         return (STRING *)aggregate;
+      }
+
+      VTABLE INTVAL is_equal(PMC *other) {
+        INTVAL other_tag;
+
+        GET_ATTR_tag(INTERP, SELF, other_tag);
+        if(other_tag == String_tag) {
+          void *self_data, *other_data;
+
+          GET_ATTR_aggregate(INTERP, SELF, self_data);
+          GET_ATTR_aggregate(INTERP, other, other_data);
+
+          return Parrot_str_equal(INTERP, (STRING *)self_data, (STRING
+                *)other_data);
+        }
+        else {
+          return SUPER(other);
+        }
       }
 
       VTABLE void destroy() {

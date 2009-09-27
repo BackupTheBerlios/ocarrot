@@ -19,6 +19,7 @@ floats).
 pmclass caml_float
     extends caml_block
     need_ext
+    auto_attrs
     dynpmc
     group ocarrot_group
     hll ocarrot {

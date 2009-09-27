@@ -17,6 +17,7 @@ This PMC stores OCarrot (fixed size) arrays.
 
 pmclass caml_array
     extends caml_block
+    auto_attrs
     need_ext
     dynpmc
     group ocarrot_group
