@@ -88,7 +88,7 @@
 .end
 
 .sub 'test_array_tag'
-    $P0 = new 'caml_float'
+    $P0 = new 'caml_array'
 
     $I0 = $P0.'tag'()
     $I1 = le $I0, 255
