@@ -21,6 +21,6 @@ sub which_command {
   my $tap = shift;
   my $file = shift;
 
-  return [qw(./parrot/parrot -w -I ./src/parrot/ -L ./src/pmc),
+  return [qw(./parrot_install/bin/parrot -w -I./src/parrot/ -X./src/pmc),
     $file];
 }

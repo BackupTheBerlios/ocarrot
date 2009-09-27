@@ -17,71 +17,69 @@ Configure.pl - a configure script for a high level language running on Parrot
 
 =cut
 
+use 5.008;
 use strict;
 use warnings;
-use 5.008;
 
 # core Perl 5 modules
 use File::Spec  ();
 
-# Modules from CPAN
-# use File::Which ();
-
 my %valid_options = (
     'help'          => 'Display configuration help',
     'parrot-config' => 'Use configuration given by parrot_config binary',
-    'gen-parrot'    => 'Automatically retrieve and build Parrot',
 );
 
+my @parrot_config_exe = qw(
+  parrot_install/bin/parrot_config
+  ../../parrot_config
+  parrot_config
+);
 
 #  Get any options from the command line
 my %options = get_command_options();
 
+# Set the path to parrot_config if provided
+if ($options{'parrot-config'} && $options{'parrot-config'} ne '1') {
+  @parrot_config_exe = ($options{'parrot-config'});
+}
 
-#  Print help if it's requested
+# Print help if it's requested
 if ($options{'help'}) {
     print_help();
     exit(0);
 }
 
-
-#  Update/generate parrot build if needed
-if ($options{'gen-parrot'}) {
-    system("$^X build/gen_parrot.pl");
-}
-    
-
-#  Get a list of parrot-configs to invoke.
-my @parrot_config_exe = (
-    'parrot/parrot_config', 
-    '../../parrot_config',
-    'parrot_config'
-);
-if ($options{'parrot-config'} && $options{'parrot-config'} ne '1') {
-    @parrot_config_exe = ($options{'parrot-config'});
-}
-
-#  Get configuration information from parrot_config
+# Get configuration information from parrot_config
 my %config = read_parrot_config(@parrot_config_exe);
-unless (%config) {
-    die <<"END";
-Unable to locate parrot_config.
-To automatically checkout (svn) and build a copy of parrot,
-try re-running Configure.pl with the '--gen-parrot' option.
-Or, use the '--parrot-config' option to explicitly specify
-the location of parrot_config.
+
+my $parrot_errors = '';
+if (!%config) { 
+  $parrot_errors .= "Unable to locate parrot_config\n"; 
+}
+
+if ($parrot_errors) {
+  die <<"END";
+===SORRY!===
+$parrot_errors
 END
 }
 
-#  Create the Makefile using the information we just got
+# Create the Makefile using the information we just got
 create_files(
-    \%config,
-    { 'build/Makefile.in'                => 'Makefile' }
+  \%config,
+  { 'build/Makefile.in'                => 'Makefile' }
 );
 
 #  Done.
-done($config{'make'});
+my $make = $config{'make'};
+print <<"END";
 
+You can now use '$make' to build OCarrot.
+After that, you can use '$make test' to run some local tests.
+
+END
+
+exit 0;
 
 #  Process command line arguments into a hash.
 sub get_command_options {
@@ -95,34 +93,33 @@ sub get_command_options {
         }
         die qq/Invalid option "$arg".  See "perl Configure.pl --help" for valid options.\n/;
     }
-    %options;
+    return %options;
 }
 
-
 sub read_parrot_config {
-    my @parrot_config_exe = @_;
-    my %config;
-    for my $exe (@parrot_config_exe) {
-        no warnings;
-        if (open my $parrot_config_fh, '-|', "$exe --dump") {
-            print "Reading configuration information from $exe\n";
-            while (<$parrot_config_fh>) {
-                if (/(\w+) => '(.*)'/) { $config{$1} = $2 }
-            }
-            close $parrot_config_fh;
+  my @parrot_config_exe = @_;
+  my %config;
+  for my $exe (@parrot_config_exe) {
+    no warnings;
+    if (open my $parrot_config_fh, '-|', "$exe --dump") {
+      print "Reading configuration information from $exe\n";
+      while (<$parrot_config_fh>) {
+        if (/(\w+) => '(.*)'/) { $config{$1} = $2 }
+      }
+      close $parrot_config_fh;
 
-            if (%config) {
-                my $parrot_config_exe; #    = File::Which::which($exe) if $exe eq 'parrot_config';
-                $parrot_config_exe     ||= File::Spec->rel2abs($exe);
-                $parrot_config_exe     ||= File::Spec->rel2abs("$exe$config{EXE}");
-                $parrot_config_exe     ||= $exe;
-                $config{parrot_config_exe} = $parrot_config_exe;
-                last;
-            }
-        }
+      if (%config) {
+        my $parrot_config_exe;
+        $parrot_config_exe     ||= File::Spec->rel2abs($exe);
+        $parrot_config_exe     ||= File::Spec->rel2abs("$exe$config{EXE}");
+        $parrot_config_exe     ||= $exe;
+        $config{parrot_config_exe} = $parrot_config_exe;
+        last;
+      }
     }
+  }
 
-    return %config;
+  return %config;
 }
 
 
@@ -154,19 +151,6 @@ sub create_files {
         }
     }
 }
-
-
-sub done {
-    my ($make) = @_;
-    print <<"END";
-
-You can now use '$make' to build OCarrot.
-After that, you can use '$make test' to run some local tests.
-
-END
-    exit 0;
-}
-
 
 #  Print some help text.
 sub print_help {
